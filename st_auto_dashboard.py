@@ -5,6 +5,11 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 from streamlit_autorefresh import st_autorefresh
+from pathlib import path
+# Setting the file paths
+BASE_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BASE_DIR
+DATA_FILE = REPO_ROOT / "Project-Management-Sample=Data.xlsx"
 # Auto-refresh setup
 file_path = "Project-Management-Sample-Data.xlsx"
 refresh_interval = 30_000  # seconds
