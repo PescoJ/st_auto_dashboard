@@ -5,6 +5,8 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 from streamlit_autorefresh import st_autorefresh
+# Initialize the Streamlit app
+app = streamlit(__name__)
 # Auto-refresh setup
 file_path = "Project-Management-Sample-Data.xlsx"
 refresh_interval = 30_000  # seconds
@@ -152,4 +154,7 @@ with tab_5:
         "Start Date": st.column_config.DateColumn("Start Date"),
         "End Date": st.column_config.DateColumn("End Date"),
         "Progress": st.column_config.ProgressColumn("Progress", color="auto")})
+    
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8049, debug=True)
     
