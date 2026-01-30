@@ -1,32 +1,38 @@
 # This code imports Pandas and Streamlit libraries to create a simple dashboard application.
 import time
 from pathlib import Path
+
 import pandas as pd
 import streamlit as st
 import altair as alt
-from streamlit_autorefresh import st_autorefresh
-from pathlib import path
+
 # Setting the file paths
 BASE_DIR = Path(__file__).resolve().parent
-REPO_ROOT = BASE_DIR
-DATA_FILE = REPO_ROOT / "Project-Management-Sample=Data.xlsx"
+DATA_FILE = BASE_DIR / "Project-Management-Sample-Data.xlsx"
+LOGO_FILE = BASE_DIR / "logo.PNG"
 # Auto-refresh setup
-file_path = "Project-Management-Sample-Data.xlsx"
 refresh_interval = 30_000  # seconds
 st.components.v1.html(
-    f"""
-    <script>
-      setTimeout(() => window.location.reload(), {refresh_interval});
-    </script>
-    """,
+    f"<script>setTimeout(() => window.location.reload(), {refresh_interval}); </script>",
     height=0,
 )
-def get_mtime(path: str) -> float:
-    return Path(path).stat().st_mtime
+def get_mtime(path: Path) -> float:
+    return path.stat().st_mtime
+# Function to load data from an Excel file with caching
+@st.cache_data(ttl=30)
+def load_workbook(path: str, mtime: float):
+     return pd.read_excel(path, sheet_name=None)
 # Set up the Streamlit page configuration
 st.set_page_config(layout="wide")
-# Display a logo at the top of the dashboard
-st.image("logo.png", width=100)
+# Display a logo or return an error message
+if not DATA_FILE.exists():
+     st.error(f"Excel file not found: {DATA_FILE}")
+     st.write("Files next to this script:", [p.name for p in BASE_DIR.iterdir()])
+     st.stop()
+if LOGO_FILE.exists():
+     st.image("logo.PNG", width=100)
+mtime = get_mtime(DATA_FILE)
+sheets = load_workbook(str(DATA_FILE), mtime)
 # Custom CSS to align buttons to the right
 st.markdown(
     """
@@ -45,7 +51,7 @@ st.markdown(
 # Creating a banner for the page
 st.markdown('<div class="top-actions">', unsafe_allow_html=True)
 # Creating three buttons: Manage Projects, Manage Tasks, and Manage Users
-spacer, button_one, button_two, button_three = st.columns([9, 1, 1, 1], gap="small")
+spacer, button_one, button_two, button_three = st.columns([7.5, 1, 1, 1], gap="small")
 with button_one:
     manage_projects = st.popover(label="Manage Projects")
     with manage_projects:
@@ -66,15 +72,9 @@ with button_three:
 st.markdown("</div>", unsafe_allow_html=True)
 # Set the title and version of the dashboard
 st.title("Project Management Master Dashboard")
-st.markdown("Version 0.1.4")
-# Function to load data from an Excel file with caching
-@st.cache_data(ttl=30)
-def load_workbook(path: str, mtime: float):
-    return pd.read_excel(path, sheet_name=None)
-mtime = get_mtime("Project-Management-Sample-Data.xlsx")
-sheets = load_workbook("Project-Management-Sample-Data.xlsx", mtime)
+st.markdown("Version 0.1.5")
 st.caption(f"Last updated: {time.ctime(mtime)}")
-df = load_workbook("Project-Management-Sample-Data.xlsx", get_mtime("Project-Management-Sample-Data.xlsx"))
+df = load_workbook(DATA_FILE, get_mtime(DATA_FILE))
 # Format data for Line Chart on Step Tab 1
 def load_progress_data(filepath):
     df = pd.read_excel(filepath, sheet_name="Progress Over Time")
@@ -90,7 +90,7 @@ def load_progress_data(filepath):
     return long_df
 # Create a side bar for holding Project Information
 with st.sidebar:
-    st.logo("logo.png", size="large")
+    st.logo(LOGO_FILE, size="large")
     st.header("Project Information")
     project_name = st.text_input("Project Name", value="New Project")
     project_manager = st.text_input("Project Manager", value="John Doe")
@@ -98,7 +98,7 @@ with st.sidebar:
     end_date = st.date_input("End Date")
     st.markdown("---")
 # Use a default file if no file is uploaded
-DEFAULT_FILE = "Project-Management-Sample-Data.xlsx"
+DEFAULT_FILE = DATA_FILE
 data_source = DEFAULT_FILE
 # Create tabs for uploading data, viewing data, and displaying progress graphics
 tab_1, tab_2, tab_3, tab_4, tab_5 = st.tabs(["Progress Graphics", "End of Week 1", "End of Week 2", "End of Week 3", "End of Week 4"])
